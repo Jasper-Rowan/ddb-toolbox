@@ -16,16 +16,22 @@ const Video = new Entity({
   name: "Video",
   attributes: {
     videoId: { type: "number", partitionKey: true },
-    Labels: { type: "map" },
+    Labels: 'string',
     // Add other attributes here
   },
   table: VideoTable,
 });
 
-async function addVideo(videoId: number, Labels: Record<string, number>) {
+interface Label {
+  Name: string,
+  Confidence: number,
+  Timestamp: number
+}
+
+async function addVideo(videoId: number, Labels: Label[]) {
   const video = {
     videoId,
-    Labels,
+    Labels: JSON.stringify(Labels), // Stringify Labels before storing
     // Add other attributes here
   };
 
@@ -33,13 +39,34 @@ async function addVideo(videoId: number, Labels: Record<string, number>) {
 }
 
 async function getVideo(videoId: number) {
-  const video = await Video.get({ videoId });
-  console.log(video);
-  return video;
-}
+    const video = await Video.get({ videoId });
+    // Parse Labels after retrieving
+    //@ts-ignore
+    if (video.Item.Labels) {
+    //@ts-ignore
+      video.Labels = JSON.parse(video.Item.Labels);
+    } else {
+      console.log("No Labels found for this video.");
+    }
+    console.log('video: ', video);
+    return video;
+  }
+  
+let Labels = [
+    {
+      Name: "natural_spring_water",
+      Confidence: 37.621002197265625,
+      Timestamp: 0,
+    },
+    {
+      Name: "not_liquid_death",
+      Confidence: 52.36300277709961,
+      Timestamp: 1000,
+    },
+  ];
 
 // Add a video
-addVideo(1, { "Liquid_Death": 99.9999, "Timestamp": 1.00550 }).then(() => {
+addVideo(10, Labels).then(() => {
   // Get the video
-  getVideo(1);
+  getVideo(10);
 });
