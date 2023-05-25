@@ -1,12 +1,9 @@
-import * as AWS from "aws-sdk";
+import { DynamoDBClient, CreateTableCommand, CreateTableCommandInput } from "@aws-sdk/client-dynamodb";
 
-AWS.config.update({
-  region: "us-east-1",
-});
+const region = "us-east-1";
+const client = new DynamoDBClient({ region });
 
-const dynamodb = new AWS.DynamoDB();
-
-const params: AWS.DynamoDB.CreateTableInput = {
+const params: CreateTableCommandInput = {
   TableName: "Videos",
   KeySchema: [
     { AttributeName: "videoId", KeyType: "HASH" }, //Partition key
@@ -18,18 +15,18 @@ const params: AWS.DynamoDB.CreateTableInput = {
   },
 };
 
-export function createTable() {
-  dynamodb.createTable(params, (err, data) => {
-    if (err) {
-      console.error(
-        "Unable to create table. Error JSON:",
-        JSON.stringify(err, null, 2)
-      );
-    } else {
-      console.log(
-        "Created table. Table description JSON:",
-        JSON.stringify(data, null, 2)
-      );
-    }
-  });
+export async function createTable() {
+  const command = new CreateTableCommand(params);
+  try {
+    const data = await client.send(command);
+    console.log(
+      "Created table. Table description JSON:",
+      JSON.stringify(data, null, 2)
+    );
+  } catch (err) {
+    return console.error(
+      "Unable to create table. Error JSON:",
+      JSON.stringify(err, null, 2)
+    );
+  }
 }
